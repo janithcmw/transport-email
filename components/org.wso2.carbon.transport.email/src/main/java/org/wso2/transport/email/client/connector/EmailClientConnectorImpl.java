@@ -126,7 +126,7 @@ public class EmailClientConnectorImpl implements EmailClientConnector {
                     + "It is not given in the email property map.");
         }
         
-        try{
+        try {
             session = Session.getInstance(serverProperties, new EmailAuthenticator(username, password));
         } catch (Exception e) {
             logger.info("PEOPLESUNITEDSUB-99: Session creating Exception: ", e);
