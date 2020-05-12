@@ -125,8 +125,12 @@ public class EmailClientConnectorImpl implements EmailClientConnector {
             throw new EmailConnectorException("Password of the email account is" + " a mandatory parameter."
                     + "It is not given in the email property map.");
         }
-
-        session = Session.getInstance(serverProperties, new EmailAuthenticator(username, password));
+        
+        try{
+            session = Session.getInstance(serverProperties, new EmailAuthenticator(username, password));
+        } catch (Exception e) {
+            logger.info("PEOPLESUNITEDSUB-99: Session creating Exception: ", e);
+        }
 
         try {
             transport = session.getTransport();
@@ -137,15 +141,17 @@ public class EmailClientConnectorImpl implements EmailClientConnector {
         } catch (MessagingException e) {
             throw new EmailConnectorException(
                     "Error is encountered while creating " + " the connection using the session." + e.getMessage(), e);
-
+        } catch (Exception e) {
+            logger.info("PEOPLESUNITEDSUB-99: Exception transport.connect() method call ", e);
         }
-
+        
         if (null != properties.get(Constants.WAIT_TIME)) {
             //if wait time is not given by the user or defined as null then connection will keep forever.
             waitTimeBeforeConnectionClose = Integer.parseInt(properties.get(Constants.WAIT_TIME));
         }
 
         isInitMethodCalled = true;
+        logger.info("PEOPLESUNITEDSUB-99: End of the EmailClientConnectionImpl class");
     }
 
     @Override 
