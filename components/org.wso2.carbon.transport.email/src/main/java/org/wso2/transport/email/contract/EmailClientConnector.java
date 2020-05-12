@@ -47,6 +47,9 @@ public interface EmailClientConnector {
      void send(EmailBaseMessage emailMessage)
             throws EmailConnectorException;
 
+     void send(EmailBaseMessage emailMessage, boolean expectRespose)
+             throws EmailConnectorException;
+
      /**
       * Returns whether the connection is active
       */

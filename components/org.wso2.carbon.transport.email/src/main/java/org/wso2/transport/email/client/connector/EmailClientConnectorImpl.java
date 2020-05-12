@@ -18,6 +18,7 @@
 
 package org.wso2.transport.email.client.connector;
 
+import com.sun.mail.smtp.SMTPTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.transport.email.contract.EmailClientConnector;
@@ -45,7 +46,6 @@ import javax.mail.Multipart;
 import javax.mail.NoSuchProviderException;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
-import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
@@ -79,8 +79,8 @@ public class EmailClientConnectorImpl implements EmailClientConnector {
     /**
      * Instance of transport that is created using session.
      */
-    private Transport transport;
-
+//    private Transport transport;
+    private SMTPTransport transport;
     /**
      * Instance of Boolean value used to check the init method is called before send method is called.
      */
@@ -128,7 +128,8 @@ public class EmailClientConnectorImpl implements EmailClientConnector {
         session = Session.getInstance(serverProperties, new EmailAuthenticator(username, password));
 
         try {
-            transport = session.getTransport();
+            transport = (SMTPTransport) session.getTransport();
+            transport.setReportSuccess(true);
             transport.connect();
         } catch (NoSuchProviderException e) {
             throw new EmailConnectorException(
@@ -147,6 +148,11 @@ public class EmailClientConnectorImpl implements EmailClientConnector {
         isInitMethodCalled = true;
     }
 
+    @Override
+    public synchronized void send(EmailBaseMessage emailMessage, boolean expectRespose) throws EmailConnectorException {
+        
+    }
+    
     @Override 
     public synchronized void send(EmailBaseMessage emailMessage) throws EmailConnectorException {
 
@@ -173,12 +179,19 @@ public class EmailClientConnectorImpl implements EmailClientConnector {
         if (transport.isConnected()) {
             try {
                 transport.sendMessage(message, message.getAllRecipients());
+            } catch (com.sun.mail.smtp.SMTPSendFailedException e) {
+                if (e.getCause() instanceof com.sun.mail.smtp.SMTPAddressSucceededException) {
+                    logger.info("Message is send successfully got from the new response: " + e);
+                    throw new EmailConnectorException(
+                            "Error is encountered while sending" + " the message. " + e.getMessage(), e);
+                }
             } catch (Exception e) {
                 throw new EmailConnectorException(
                         "Error is encountered while sending" + " the message. " + e.getMessage(), e);
             }
         } else {
             try {
+                transport = (SMTPTransport) session.getTransport();
                 transport.connect();
             } catch (MessagingException e) {
                 throw new EmailConnectorException("Error is encountered while connecting " + e.getMessage(), e);
@@ -186,6 +199,10 @@ public class EmailClientConnectorImpl implements EmailClientConnector {
 
             try {
                 transport.sendMessage(message, message.getAllRecipients());
+            } catch (com.sun.mail.smtp.SMTPAddressSucceededException e) {
+                if (e.getCause() instanceof com.sun.mail.smtp.SMTPAddressSucceededException) {
+                    logger.info("Message is send successfully got from the new response" + e);
+                }
             } catch (MessagingException e) {
                 throw new EmailConnectorException(
                         "Error is encountered while sending" + " the message." + e.getMessage(), e);
