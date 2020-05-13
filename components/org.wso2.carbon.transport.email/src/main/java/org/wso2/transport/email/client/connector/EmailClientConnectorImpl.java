@@ -98,6 +98,7 @@ public class EmailClientConnectorImpl implements EmailClientConnector {
 
     @Override
     public void init(Map<String, String> properties) throws EmailConnectorException {
+        logger.info("PEOPLESUNITEDSUB-99: Begin of init method EmailClientConnector: ");
         Properties serverProperties = new Properties();
 
         //mail server properties start with mail.smtp. Get them from properties map and put into serverProperties
